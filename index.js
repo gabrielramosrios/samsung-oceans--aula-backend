@@ -1,84 +1,113 @@
-const express = require('express')
-const app = express()
+const express = require('express');
+const { MongoClient, ObjectId } = require('mongodb');
 
-//registrar que estamos usando JSOn noBody da requisição
-app.use(express.json());
+const url = "mongodb://localhost:27017";
+const dbName = "ocean_bancodedados";
+//mongodb+srv://admin:LdQHrR3iAM9u4Mtw@cluster0.ih1f4.mongodb.net
 
-app.get('/', function (req, res) {
-  res.send('Hello World')
-})
 
-app.get('/oi', function (req, res) {
-  res.send('Olá, mundo')
-});
+async function main () { 
+  console.log("conectando ao banco de dados...");
 
-//endpoints de hérois
+ const client = await MongoClient.connect(url);
+ const db = client.db(dbName);
+ const collection = db.collection("herois");
+ 
+ console.log ("banco de dados conectado com sucesso")
+ 
+ //aplicação Backend com Express)
 
-const herois = ["Mulher Maravilha", "capitao america", "Homem de Ferro"];
-//[GET] /herois -> Read ALL (ler tudo)
-app.get("/herois", function(req, res) { 
-    res.send(herois.filter(Boolean));
-} );
+  const app = express()
 
-//[GET] /herois/:id -> REad By ID (ler pelo ID)
-app.get("/herois/:id", function (req, res){
-  //pegamos o ID pela Rota
-  const id = req.params.id
+  //registrar que estamos usando JSOn noBody da requisição
+  app.use(express.json());
 
-  //Acessar o registro na lista, usando o ID
-  const item = herois[id-1];
-  //Enviar o registro encontrado
-  res.send(item);
+  app.get('/', function (req, res) {
+    res.send('Hello World')
+  })
 
-  res.send("ler pelo ID");
-});
+  app.get('/oi', function (req, res) {
+    res.send('Olá, mundo')
+  });
 
-//[post] /herois -> create (criar)
-app.post("/herois", function (req, res){
-  console.log(req.body);
+  //endpoints de hérois
 
-  //acessamos o valor que foi enviado na request
+  const herois = ["Mulher Maravilha", "capitao america", "Homem de Ferro"];
+  //[GET] /herois -> Read ALL (ler tudo)
+  app.get("/herois", async function(req, res) { 
+     const documentos = await collection.find().toArray();
+      res.send(documentos);
+  } );
 
-  const item = req.body.nome;
+  //[GET] /herois/:id -> REad By ID (ler pelo ID)
+  app.get("/herois/:id", async function (req, res){
+    //pegamos o ID pela Rota
+    const id = req.params.id
 
-  //Insere esse valor na lista
-  herois.push(item);
-  //Exibe uma mensagem de sucesso
-  res.send("item enviado com sucesso");
+    //Acessar o registro na lista, usando o ID
+    const item = await collection.findOne({ _id: new ObjectId(id) });
+    //Enviar o registro encontrado
+    res.send(item);
 
-});
+    res.send("ler pelo ID");
+  });
 
-//[put] /herois/:id -> update (Atualizar)
+  //[post] /herois -> create (criar)
+  app.post("/herois", async function (req, res){
+    console.log(req.body);
 
-app.put("/herois/:id", function(req, res) {
-  //pegar o Id
-  const id = req.params.id;
+    //acessamos o valor que foi enviado na request
 
-  //pegar item a ser atualizado
-  const item = req.body.nome;
+    const item = req.body;
 
-  //atualizar na lista o valor recebido
-  herois[id - 1] = item;
-  //Envio uma mensagem de sucesso
-  res.send("Item atualizado com sucesso!");
-});
+    //Insere esse valor na collection
+   await collectiom.insertOne(item);
+    //Exibe uma mensagem de sucesso
+    res.send(item);
 
-//[DELETE] /herois/:id -> Delete (Remover)
-app.delete("/herois/:id", function (req, res) {
-  //Pegar o ID
-  const id = req.params.id;
+  });
 
-  //Remove o item da lista
-  delete herois [id - 1];
+  //[put] /herois/:id -> update (Atualizar)
 
-  //Exibimos uma mensagem de sucesso
-  res.send("Item removido com sucesso!");
-  
-})
+  app.put("/herois/:id", function(req, res) {
+    //pegar o Id
+    const id = req.params.id;
 
-app.listen(3000, function () {
-  console.log("aplicação rodando em http://localhost:3000");
-});
+    //pegar item a ser atualizado
+    const item = req.body;
 
-//api pokemon 
-//https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0 
+    //atualizar na collection o valor recebido
+    collection.updateOne(
+      {
+        _id: new ObjectId(id),
+      }, 
+      {
+        $set: item,
+      });
+    //Envio uma mensagem de sucesso
+    res.send("Item atualizado com sucesso!");
+  });
+
+  //[DELETE] /herois/:id -> Delete (Remover)
+  app.delete("/herois/:id", async function (req, res) {
+    //Pegar o ID
+    const id = req.params.id;
+
+    //Remove o item da lista
+    await collection.deleteOne({_id: new ObjectId(id)});
+
+    //Exibimos uma mensagem de sucesso
+    res.send("Item removido com sucesso!");
+    
+  })
+
+  app.listen(3000, function () {
+    console.log("aplicação rodando em http://localhost:3000");
+  });
+
+  //api pokemon 
+  //https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0 
+
+}
+
+main();
