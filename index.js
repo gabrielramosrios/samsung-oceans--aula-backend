@@ -5,8 +5,8 @@ const url = "mongodb://localhost:27017";
 const dbName = "ocean_bancodedados";
 //mongodb+srv://admin:LdQHrR3iAM9u4Mtw@cluster0.ih1f4.mongodb.net
 
-
 async function main () { 
+  /*
   console.log("conectando ao banco de dados...");
 
  const client = await MongoClient.connect(url);
@@ -14,6 +14,7 @@ async function main () {
  const collection = db.collection("herois");
  
  console.log ("banco de dados conectado com sucesso")
+ */
  
  //aplicação Backend com Express)
 
@@ -101,7 +102,7 @@ async function main () {
     
   })
 
-  app.listen(3000, function () {
+  app.listen( process.env.PORT || 3000, function () {
     console.log("aplicação rodando em http://localhost:3000");
   });
 
